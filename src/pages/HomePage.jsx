@@ -1,33 +1,60 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FaSearch, FaLightbulb, FaShoppingBag, FaCheckCircle } from 'react-icons/fa'
-import { GiHerbs, GiHealthNormal } from 'react-icons/gi'
-import { productService } from '../api/services'
+import { FaSearch, FaLightbulb, FaShoppingBag } from 'react-icons/fa'
+import { Gi3DGlasses, GiHealthNormal } from 'react-icons/gi'
 import ProductCard from '../components/product/ProductCard'
-import LoadingSpinner from '../components/common/LoadingSpinner'
 import useCartStore from '../store/useCartStore'
 import toast from 'react-hot-toast'
 
+// Data produk dummy
+const DUMMY_PRODUCTS = [
+  {
+    id: 1,
+    nama: 'Jamu Kunyit Asam',
+    harga: 15000,
+    gambar: 'https://images.unsplash.com/photo-1505944357768-b0a8e6d1e9d8?w=400',
+    deskripsi: 'Menyegarkan dan baik untuk kesehatan wanita.',
+  },
+  {
+    id: 2,
+    nama: 'Jamu Beras Kencur',
+    harga: 12000,
+    gambar: 'https://images.unsplash.com/photo-1464983953574-0892a716854b?w=400',
+    deskripsi: 'Meningkatkan stamina dan nafsu makan.',
+  },
+  {
+    id: 3,
+    nama: 'Jamu Temulawak',
+    harga: 17000,
+    gambar: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=400',
+    deskripsi: 'Baik untuk pencernaan dan hati.',
+  },
+  {
+    id: 4,
+    nama: 'Jamu Cabe Puyang',
+    harga: 13000,
+    gambar: 'https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=400',
+    deskripsi: 'Meredakan pegal dan nyeri otot.',
+  },
+  {
+    id: 5,
+    nama: 'Jamu Sinom',
+    harga: 14000,
+    gambar: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?w=400',
+    deskripsi: 'Menyegarkan dan kaya antioksidan.',
+  },
+  {
+    id: 6,
+    nama: 'Jamu Pahitan',
+    harga: 16000,
+    gambar: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400',
+    deskripsi: 'Baik untuk detoks dan kesehatan kulit.',
+  },
+]
+
 function HomePage() {
-  const [featuredProducts, setFeaturedProducts] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [featuredProducts] = useState(DUMMY_PRODUCTS)
   const addItem = useCartStore(state => state.addItem)
-
-  useEffect(() => {
-    fetchFeaturedProducts()
-  }, [])
-
-  const fetchFeaturedProducts = async () => {
-    try {
-      setLoading(true)
-      const data = await productService.getAllProducts()
-      setFeaturedProducts(data.slice(0, 6))
-    } catch (error) {
-      console.error('Error fetching products:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleAddToCart = (product) => {
     addItem(product, 1)
@@ -41,7 +68,7 @@ function HomePage() {
       description: 'Sistem pakar berbasis AI untuk rekomendasi produk yang tepat',
     },
     {
-      icon: <GiHerbs className="text-4xl" />,
+      icon: <Gi3DGlasses className="text-4xl" />,
       title: 'Jamu Berkualitas',
       description: 'Produk jamu tradisional pilihan dengan khasiat terbaik',
     },
@@ -70,7 +97,7 @@ function HomePage() {
                 <span className="text-gray-800">Vending Machine Jamu Tradisional</span>
               </h1>
               <p className="text-xl text-gray-600 mb-8">
-                Temukan jamu tradisional Indonesia yang tepat untuk kesehatan Anda 
+                Temukan jamu tradisional Indonesia yang tepat untuk kesehatan Anda
                 dengan bantuan teknologi AI modern.
               </p>
               <div className="flex flex-wrap gap-4">
@@ -84,7 +111,7 @@ function HomePage() {
                 </Link>
               </div>
             </div>
-            
+
             <div className="relative">
               <div className="bg-white rounded-2xl shadow-2xl p-8 transform hover:scale-105 transition-transform">
                 <img
@@ -104,7 +131,7 @@ function HomePage() {
           <h2 className="text-4xl font-display font-bold text-center mb-12">
             Mengapa Memilih <span className="text-gradient">Jamuin</span>?
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
               <div key={index} className="text-center p-6 card hover:scale-105 transition-transform">
@@ -130,22 +157,15 @@ function HomePage() {
               Lihat Semua
             </Link>
           </div>
-          
-          {loading ? (
-            <div className="py-20">
-              <LoadingSpinner size="large" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredProducts.map(product => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAddToCart={handleAddToCart}
-                />
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {featuredProducts.map(product => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                onAddToCart={handleAddToCart}
+              />
+            ))}
+          </div>
         </div>
       </section>
 
@@ -155,7 +175,7 @@ function HomePage() {
           <h2 className="text-4xl font-display font-bold text-center mb-12">
             Cara <span className="text-gradient">Berbelanja</span>
           </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
               <div className="bg-primary-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
@@ -166,7 +186,7 @@ function HomePage() {
                 Gunakan fitur konsultasi AI atau langsung pilih produk yang Anda inginkan
               </p>
             </div>
-            
+
             <div className="text-center">
               <div className="bg-primary-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl font-bold text-primary-600">2</span>
@@ -176,7 +196,7 @@ function HomePage() {
                 Tambahkan produk pilihan Anda ke keranjang belanja
               </p>
             </div>
-            
+
             <div className="text-center">
               <div className="bg-primary-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl font-bold text-primary-600">3</span>

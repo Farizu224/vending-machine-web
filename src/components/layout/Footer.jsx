@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 import { FaGithub, FaEnvelope, FaPhone } from 'react-icons/fa'
-import { GiHerbs } from 'react-icons/gi'
 
 function Footer() {
   return (
@@ -11,7 +10,7 @@ function Footer() {
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
               <div className="bg-gradient-primary p-2 rounded-lg">
-                <GiHerbs className="text-white text-3xl" />
+                
               </div>
               <span className="text-2xl font-display font-bold text-white">
                 Jamuin

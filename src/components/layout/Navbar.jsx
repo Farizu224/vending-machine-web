@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { FaShoppingCart, FaBars, FaTimes } from 'react-icons/fa'
-import { GiHerbs } from 'react-icons/gi'
 import useCartStore from '../../store/useCartStore'
 
 function Navbar() {
@@ -24,7 +23,7 @@ function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="bg-gradient-primary p-2 rounded-lg">
-              <GiHerbs className="text-white text-3xl" />
+              
             </div>
             <span className="text-2xl font-display font-bold text-gradient">
               Jamuin
