@@ -3,14 +3,12 @@ import { FaSearch, FaFilter } from 'react-icons/fa'
 import { productService } from '../api/services'
 import ProductCard from '../components/product/ProductCard'
 import LoadingSpinner from '../components/common/LoadingSpinner'
-import useCartStore from '../store/useCartStore'
 import toast from 'react-hot-toast'
 
 function ProductsPage() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const addItem = useCartStore(state => state.addItem)
 
   useEffect(() => {
     fetchProducts()
@@ -27,11 +25,6 @@ function ProductsPage() {
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleAddToCart = (product) => {
-    addItem(product, 1)
-    toast.success(`${product.nama} ditambahkan ke keranjang`)
   }
 
   const filteredProducts = products.filter(product =>
@@ -87,7 +80,6 @@ function ProductsPage() {
                 <ProductCard
                   key={product.id}
                   product={product}
-                  onAddToCart={handleAddToCart}
                 />
               ))}
             </div>

@@ -165,7 +165,7 @@ function CheckoutPage() {
 
           {/* Order Summary */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
+            <div className="bg-white rounded-lg shadow-md p-6 top-24">
               <h2 className="text-xl font-semibold mb-4">Ringkasan Pesanan</h2>
 
               <div className="space-y-3 mb-4">

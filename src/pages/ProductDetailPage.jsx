@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FaShoppingCart, FaMinus, FaPlus, FaArrowLeft } from 'react-icons/fa'
+import { FaShoppingCart, FaMinus, FaPlus, FaArrowLeft, FaBolt } from 'react-icons/fa'
 import { productService } from '../api/services'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import useCartStore from '../store/useCartStore'
@@ -44,12 +44,17 @@ function ProductDetailPage() {
     toast.success(`${quantity} ${product.nama} ditambahkan ke keranjang`)
   }
 
+  const handleBuyNow = () => {
+    addItem(product, quantity)
+    navigate('/checkout')
+  }
+
   const decreaseQuantity = () => {
     if (quantity > 1) setQuantity(quantity - 1)
   }
 
   const increaseQuantity = () => {
-    if (quantity < product.stock) setQuantity(quantity + 1)
+    if (quantity < product.stok) setQuantity(quantity + 1)
   }
 
   if (loading) {
@@ -135,40 +140,55 @@ function ProductDetailPage() {
               {/* Quantity Selector */}
               <div className="mb-6">
                 <label className="font-semibold block mb-2">Jumlah</label>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={decreaseQuantity}
-                    className="w-10 h-10 border-2 border-gray-300 rounded-lg hover:bg-gray-100 flex items-center justify-center"
+                    className="w-12 h-12 border-2 border-gray-300 rounded-lg hover:bg-gray-100 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     disabled={quantity <= 1}
                   >
-                    <FaMinus />
+                    <FaMinus className="text-lg" />
                   </button>
-                  <span className="text-2xl font-bold w-12 text-center">
+                  <span className="text-2xl font-bold w-16 text-center">
                     {quantity}
                   </span>
                   <button
                     onClick={increaseQuantity}
-                    className="w-10 h-10 border-2 border-gray-300 rounded-lg hover:bg-gray-100 flex items-center justify-center"
+                    className="w-12 h-12 border-2 border-gray-300 rounded-lg hover:bg-gray-100 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     disabled={quantity >= product.stok}
                   >
-                    <FaPlus />
+                    <FaPlus className="text-lg" />
                   </button>
                 </div>
               </div>
 
-              {/* Add to Cart Button */}
-              <button
-                onClick={handleAddToCart}
-                disabled={product.stok === 0}
-                className={`w-full flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-semibold text-lg transition-all ${
-                  product.stok === 0
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-primary-500 hover:bg-primary-600 text-white shadow-md hover:shadow-lg'
-                }`}
-              >
-                <FaShoppingCart />
-                <span>{product.stok === 0 ? 'Stok Habis' : 'Tambah ke Keranjang'}</span>
-              </button>
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleAddToCart}
+                  disabled={product.stok === 0}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-semibold text-lg transition-all ${
+                    product.stok === 0
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-primary-500 hover:bg-primary-600 text-white shadow-md hover:shadow-lg'
+                  }`}
+                >
+                  <FaShoppingCart />
+                  <span>{product.stok === 0 ? 'Stok Habis' : 'Tambah ke Keranjang'}</span>
+                </button>
+                
+                <button
+                  onClick={handleBuyNow}
+                  disabled={product.stok === 0}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-semibold text-lg transition-all ${
+                    product.stok === 0
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-secondary-500 to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white shadow-md hover:shadow-lg'
+                  }`}
+                >
+                  <FaBolt />
+                  <span>Beli Sekarang</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

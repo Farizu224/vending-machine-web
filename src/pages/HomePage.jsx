@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom'
 import { FaSearch, FaLightbulb, FaShoppingBag } from 'react-icons/fa'
 import { Gi3DGlasses, GiHealthNormal } from 'react-icons/gi'
 import ProductCard from '../components/product/ProductCard'
-import useCartStore from '../store/useCartStore'
-import toast from 'react-hot-toast'
 
 // Data produk dummy
 const DUMMY_PRODUCTS = [
@@ -54,12 +52,6 @@ const DUMMY_PRODUCTS = [
 
 function HomePage() {
   const [featuredProducts] = useState(DUMMY_PRODUCTS)
-  const addItem = useCartStore(state => state.addItem)
-
-  const handleAddToCart = (product) => {
-    addItem(product, 1)
-    toast.success(`${product.nama} ditambahkan ke keranjang`)
-  }
 
   const features = [
     {
@@ -162,7 +154,6 @@ function HomePage() {
               <ProductCard
                 key={product.id}
                 product={product}
-                onAddToCart={handleAddToCart}
               />
             ))}
           </div>

@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
-import { FaShoppingCart, FaInfoCircle } from 'react-icons/fa'
 
-function ProductCard({ product, onAddToCart }) {
+function ProductCard({ product }) {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
@@ -10,13 +9,11 @@ function ProductCard({ product, onAddToCart }) {
     }).format(amount)
   }
 
-  const handleAddToCart = (e) => {
-    e.preventDefault()
-    onAddToCart(product)
-  }
-
   return (
-    <Link to={`/products/${product.id}`} className="card group">
+    <Link 
+      to={`/products/${product.id}`} 
+      className="card group cursor-pointer hover:shadow-xl transition-shadow duration-300"
+    >
       <div className="relative overflow-hidden">
         <img
           src={product.gambar || 'https://via.placeholder.com/300x200?text=Jamu'}
@@ -36,15 +33,15 @@ function ProductCard({ product, onAddToCart }) {
       </div>
       
       <div className="p-4">
-        <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-primary-600 transition-colors">
+        <h3 className="font-semibold text-lg mb-2 line-clamp-1 group-hover:text-primary-600 transition-colors">
           {product.nama}
         </h3>
         
         <p className="text-gray-600 text-sm mb-3 line-clamp-2">
           {product.deskripsi}
         </p>
-        
-        <div className="flex items-center justify-between mb-3">
+      </div>
+        <div className="flex items-center justify-between px-4 pb-2">
           <span className="text-2xl font-bold text-primary-600">
             {formatCurrency(product.harga)}
           </span>
@@ -52,26 +49,6 @@ function ProductCard({ product, onAddToCart }) {
             Stok: {product.stok}
           </span>
         </div>
-        
-        <div className="flex gap-2">
-          <button
-            onClick={handleAddToCart}
-            disabled={product.stok === 0}
-            className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-lg font-semibold transition-all ${
-              product.stok === 0
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-primary-500 hover:bg-primary-600 text-white shadow-md hover:shadow-lg'
-            }`}
-          >
-            <FaShoppingCart />
-            <span>{product.stok === 0 ? 'Habis' : 'Tambah'}</span>
-          </button>
-          
-          <button className="p-2 border-2 border-primary-500 text-primary-600 hover:bg-primary-50 rounded-lg transition-all">
-            <FaInfoCircle className="text-xl" />
-          </button>
-        </div>
-      </div>
     </Link>
   )
 }
