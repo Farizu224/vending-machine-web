@@ -45,7 +45,7 @@ function ProductsPage() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-display font-bold mb-2">
-            Katalog <span className="text-gradient">Produk</span>
+            <span className="text-gray-900">Katalog Produk</span>
           </h1>
           <p className="text-gray-600">
             Temukan jamu tradisional yang sesuai dengan kebutuhan Anda

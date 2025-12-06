@@ -80,21 +80,21 @@ function CartPage() {
                     className="flex gap-4 p-4 border border-gray-200 rounded-lg hover:border-primary-300 transition-colors"
                   >
                     <img
-                      src={item.imageUrl || 'https://via.placeholder.com/100'}
-                      alt={item.name}
+                      src={item.gambar || 'https://via.placeholder.com/100'}
+                      alt={item.nama}
                       className="w-20 h-20 object-cover rounded-lg"
                     />
 
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg mb-1">{item.name}</h3>
+                      <h3 className="font-semibold text-lg mb-1">{item.nama}</h3>
                       <p className="text-primary-600 font-bold">
-                        {formatCurrency(item.price)}
+                        {formatCurrency(item.harga)}
                       </p>
                     </div>
 
                     <div className="flex flex-col items-end justify-between">
                       <button
-                        onClick={() => handleRemoveItem(item.id, item.name)}
+                        onClick={() => handleRemoveItem(item.id, item.nama)}
                         className="text-red-500 hover:text-red-700 transition-colors"
                       >
                         <FaTrash />
@@ -113,14 +113,14 @@ function CartPage() {
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           className="w-8 h-8 border border-gray-300 rounded hover:bg-gray-100 flex items-center justify-center"
-                          disabled={item.quantity >= item.stock}
+                          disabled={item.quantity >= (item.stok || 100)}
                         >
                           <FaPlus className="text-sm" />
                         </button>
                       </div>
 
                       <p className="font-bold text-lg">
-                        {formatCurrency(item.price * item.quantity)}
+                        {formatCurrency(item.harga * item.quantity)}
                       </p>
                     </div>
                   </div>

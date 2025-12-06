@@ -22,9 +22,6 @@ function Navbar() {
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-gradient-primary p-2 rounded-lg">
-              
-            </div>
             <span className="text-2xl font-display font-bold text-gradient">
               Jamuin
             </span>

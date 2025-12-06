@@ -115,7 +115,7 @@ function HomePage() {
             <div className="relative">
               <div className="bg-white rounded-2xl shadow-2xl p-8 transform hover:scale-105 transition-transform">
                 <img
-                  src="https://images.unsplash.com/photo-1505944357768-b0a8e6d1e9d8?w=600"
+                  src="/racikan-jamu.jpg"
                   alt="Jamu Tradisional"
                   className="rounded-xl w-full"
                 />
