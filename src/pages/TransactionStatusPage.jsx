@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useSearchParams } from 'react-router-dom'
 import { FaCheckCircle, FaClock, FaTimesCircle } from 'react-icons/fa'
 import { transactionService } from '../api/services'
 import LoadingSpinner from '../components/common/LoadingSpinner'
@@ -7,23 +7,78 @@ import toast from 'react-hot-toast'
 
 function TransactionStatusPage() {
   const { orderId } = useParams()
+  const [searchParams] = useSearchParams()
   const [transaction, setTransaction] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchTransactionStatus()
-    // Poll every 5 seconds for status updates
-    const interval = setInterval(fetchTransactionStatus, 5000)
+    // Log Midtrans redirect params
+    const order_id = searchParams.get('order_id')
+    const status_code = searchParams.get('status_code')
+    const transaction_status = searchParams.get('transaction_status')
+    
+    console.log('Midtrans Redirect Params:', {
+      order_id,
+      status_code,
+      transaction_status,
+      orderId
+    })
+
+    // First check status from Midtrans API to sync
+    checkStatusFromMidtrans()
+    
+    // Then poll every 3 seconds for status updates (max 10 times)
+    let pollCount = 0
+    const maxPolls = 10
+    const interval = setInterval(() => {
+      pollCount++
+      if (pollCount >= maxPolls) {
+        clearInterval(interval)
+      } else {
+        fetchTransactionStatus()
+      }
+    }, 3000)
+    
     return () => clearInterval(interval)
   }, [orderId])
 
-  const fetchTransactionStatus = async () => {
+  const checkStatusFromMidtrans = async () => {
     try {
-      const data = await transactionService.getTransactionDetails(orderId)
+      console.log('🔄 Checking status from Midtrans API:', orderId)
+      // This endpoint will check Midtrans API and update database
+      const data = await transactionService.getTransactionStatus(orderId)
+      console.log('✅ Status synced from Midtrans:', data)
       setTransaction(data)
       setLoading(false)
+      
+      // Show success message if payment successful
+      const statusLower = (data.status || '').toLowerCase()
+      if (statusLower === 'success' || statusLower === 'settlement') {
+        toast.success('Pembayaran berhasil! Produk akan segera diproses.')
+      }
+    } catch (error) {
+      console.error('❌ Error checking status from Midtrans:', error)
+      // Fallback to database data
+      fetchTransactionStatus()
+    }
+  }
+
+  const fetchTransactionStatus = async () => {
+    try {
+      console.log('📥 Fetching transaction from database:', orderId)
+      const data = await transactionService.getTransactionDetails(orderId)
+      console.log('Transaction data received:', data)
+      setTransaction(data)
+      setLoading(false)
+      
+      // Show success message if payment successful
+      const statusLower = (data.status || '').toLowerCase()
+      if (statusLower === 'success' || statusLower === 'settlement') {
+        toast.success('Pembayaran berhasil! Produk akan segera diproses.')
+      }
     } catch (error) {
       console.error('Error fetching transaction:', error)
+      toast.error('Gagal memuat detail transaksi')
       setLoading(false)
     }
   }
@@ -47,15 +102,20 @@ function TransactionStatusPage() {
   }
 
   const getStatusIcon = (status) => {
-    switch (status) {
+    const statusLower = (status || '').toLowerCase()
+    switch (statusLower) {
       case 'settlement':
       case 'capture':
+      case 'success':
         return <FaCheckCircle className="text-5xl text-green-500" />
       case 'pending':
         return <FaClock className="text-5xl text-yellow-500" />
       case 'cancel':
+      case 'cancelled':
       case 'deny':
       case 'expire':
+      case 'expired':
+      case 'failed':
         return <FaTimesCircle className="text-5xl text-red-500" />
       default:
         return <FaClock className="text-5xl text-gray-500" />
@@ -63,33 +123,44 @@ function TransactionStatusPage() {
   }
 
   const getStatusText = (status) => {
-    switch (status) {
+    const statusLower = (status || '').toLowerCase()
+    switch (statusLower) {
       case 'settlement':
       case 'capture':
+      case 'success':
         return 'Pembayaran Berhasil'
       case 'pending':
         return 'Menunggu Pembayaran'
       case 'cancel':
+      case 'cancelled':
         return 'Dibatalkan'
       case 'deny':
         return 'Ditolak'
       case 'expire':
+      case 'expired':
         return 'Kadaluarsa'
+      case 'failed':
+        return 'Gagal'
       default:
         return 'Status Tidak Diketahui'
     }
   }
 
   const getStatusColor = (status) => {
-    switch (status) {
+    const statusLower = (status || '').toLowerCase()
+    switch (statusLower) {
       case 'settlement':
       case 'capture':
+      case 'success':
         return 'text-green-600'
       case 'pending':
         return 'text-yellow-600'
       case 'cancel':
+      case 'cancelled':
       case 'deny':
       case 'expire':
+      case 'expired':
+      case 'failed':
         return 'text-red-600'
       default:
         return 'text-gray-600'
@@ -124,10 +195,10 @@ function TransactionStatusPage() {
           {/* Status Icon */}
           <div className="text-center mb-8">
             <div className="mb-4">
-              {getStatusIcon(transaction.transactionStatus)}
+              {getStatusIcon(transaction.status)}
             </div>
-            <h1 className={`text-3xl font-bold mb-2 ${getStatusColor(transaction.transactionStatus)}`}>
-              {getStatusText(transaction.transactionStatus)}
+            <h1 className={`text-3xl font-bold mb-2 ${getStatusColor(transaction.status)}`}>
+              {getStatusText(transaction.status)}
             </h1>
             <p className="text-gray-600">
               Order ID: <span className="font-mono font-semibold">{transaction.orderId}</span>
@@ -139,7 +210,7 @@ function TransactionStatusPage() {
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <p className="text-gray-600 text-sm mb-1">Tanggal Transaksi</p>
-                <p className="font-semibold">{formatDate(transaction.transactionTime)}</p>
+                <p className="font-semibold">{formatDate(transaction.createdAt)}</p>
               </div>
               <div>
                 <p className="text-gray-600 text-sm mb-1">Total Pembayaran</p>
@@ -153,8 +224,15 @@ function TransactionStatusPage() {
               <div className="mb-4">
                 <p className="text-gray-600 text-sm mb-1">Metode Pembayaran</p>
                 <p className="font-semibold capitalize">
-                  {transaction.paymentType.replace('_', ' ')}
+                  {transaction.paymentType.replace(/_/g, ' ')}
                 </p>
+              </div>
+            )}
+            
+            {transaction.paidAt && (
+              <div className="mb-4">
+                <p className="text-gray-600 text-sm mb-1">Waktu Pembayaran</p>
+                <p className="font-semibold text-green-600">{formatDate(transaction.paidAt)}</p>
               </div>
             )}
           </div>
@@ -165,33 +243,45 @@ function TransactionStatusPage() {
             <div className="space-y-2">
               <div>
                 <span className="text-gray-600">Nama:</span>
-                <span className="ml-2 font-medium">{transaction.customerName}</span>
+                <span className="ml-2 font-medium">{transaction.user?.name || 'N/A'}</span>
               </div>
               <div>
                 <span className="text-gray-600">Email:</span>
-                <span className="ml-2 font-medium">{transaction.customerEmail}</span>
+                <span className="ml-2 font-medium">{transaction.user?.email || 'N/A'}</span>
               </div>
               <div>
                 <span className="text-gray-600">Telepon:</span>
-                <span className="ml-2 font-medium">{transaction.customerPhone}</span>
+                <span className="ml-2 font-medium">{transaction.user?.phone || 'N/A'}</span>
               </div>
             </div>
           </div>
 
-          {/* Items */}
-          {transaction.items && transaction.items.length > 0 && (
+          {/* Product Info */}
+          {transaction.product && (
             <div className="mb-6">
               <h3 className="font-semibold text-lg mb-3">Produk yang Dibeli</h3>
-              <div className="space-y-2">
-                {transaction.items.map((item, index) => (
-                  <div key={index} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                    <div>
-                      <p className="font-medium">{item.name}</p>
-                      <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
-                    </div>
-                    <p className="font-semibold">{formatCurrency(item.price * item.quantity)}</p>
-                  </div>
-                ))}
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                {transaction.product.gambar && (
+                  <img 
+                    src={transaction.product.gambar} 
+                    alt={transaction.product.nama}
+                    className="w-20 h-20 object-cover rounded"
+                    onError={(e) => {
+                      e.target.src = 'https://via.placeholder.com/80?text=No+Image'
+                    }}
+                  />
+                )}
+                <div className="flex-1 ml-4">
+                  <p className="font-semibold text-lg">{transaction.product.nama}</p>
+                  <p className="text-sm text-gray-600">Jumlah: {transaction.quantity} item</p>
+                  <p className="text-sm text-gray-600">Harga satuan: {formatCurrency(transaction.product.harga)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-gray-600">Total:</p>
+                  <p className="font-bold text-xl text-primary-600">
+                    {formatCurrency(transaction.grossAmount)}
+                  </p>
+                </div>
               </div>
             </div>
           )}

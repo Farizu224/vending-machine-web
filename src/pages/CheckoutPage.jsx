@@ -96,7 +96,7 @@ function CheckoutPage() {
     <div className="min-h-screen py-8">
       <div className="container-custom max-w-4xl">
         <h1 className="text-4xl font-display font-bold mb-8">
-          <span className="text-gradient">Checkout</span>
+          <span className="text-gray-900">Checkout</span>
         </h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -172,10 +172,10 @@ function CheckoutPage() {
                 {items.map((item) => (
                   <div key={item.id} className="flex justify-between text-sm">
                     <span className="text-gray-600">
-                      {item.name} x{item.quantity}
+                      Kuantitas
                     </span>
-                    <span className="font-semibold">
-                      {formatCurrency(item.price * item.quantity)}
+                    <span className="text-gray-600">
+                      {item.name} x{item.quantity}
                     </span>
                   </div>
                 ))}

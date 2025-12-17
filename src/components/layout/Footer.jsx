@@ -3,8 +3,8 @@ import { FaGithub, FaEnvelope, FaPhone } from 'react-icons/fa'
 
 function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-300 mt-16">
-      <div className="container-custom py-12">
+    <footer className="bg-gray-900 text-gray-300">
+      <div className="container-custom pt-12 pb-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
@@ -86,7 +86,7 @@ function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500">
+        <div className="border-t border-gray-800 mt-8 pt-2 text-center text-gray-500">
           <p>&copy; 2025 Jamuin. All rights reserved.</p>
         </div>
       </div>

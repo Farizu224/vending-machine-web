@@ -52,3 +52,20 @@ export const transactionService = {
     return await axiosInstance.get(`/payments/transaction/${orderId}`)
   },
 }
+
+export const authService = {
+  // Register new user
+  register: async (data) => {
+    return await axiosInstance.post('/auth/register', data)
+  },
+
+  // Login user
+  login: async (data) => {
+    return await axiosInstance.post('/auth/login', data)
+  },
+
+  // Get current user profile (if backend supports)
+  getProfile: async () => {
+    return await axiosInstance.get('/auth/profile')
+  },
+}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { FaLightbulb, FaCheckCircle, FaArrowLeft, FaCheck, FaTimes } from 'react-icons/fa'
+import { FaLightbulb, FaCheckCircle, FaArrowLeft, FaCheck, FaTimes, FaMars, FaVenus } from 'react-icons/fa'
 import { expertSystemService } from '../api/services'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import toast from 'react-hot-toast'
@@ -9,6 +9,7 @@ function ExpertSystemPage() {
   const [sessionId, setSessionId] = useState(null)
   const [currentQuestion, setCurrentQuestion] = useState(null)
   const [currentQuestionId, setCurrentQuestionId] = useState(null)
+  const [currentOptions, setCurrentOptions] = useState([])
   const [recommendation, setRecommendation] = useState(null)
   const [loading, setLoading] = useState(false)
   const [answers, setAnswers] = useState([])
@@ -25,9 +26,11 @@ function ExpertSystemPage() {
       setSessionId(startData.sessionId)
       setCurrentQuestion(startData.nextQuestion?.text || startData.question)
       setCurrentQuestionId(startData.nextQuestion?.id)
+      setCurrentOptions(startData.nextQuestion?.options || [])
       setQuestionHistory([{
         questionId: startData.nextQuestion?.id,
-        question: startData.nextQuestion?.text || startData.question
+        question: startData.nextQuestion?.text || startData.question,
+        options: startData.nextQuestion?.options || []
       }])
     } catch (error) {
       toast.error('Gagal memulai konsultasi')
@@ -37,32 +40,31 @@ function ExpertSystemPage() {
     }
   }
 
-  const handleAnswer = async (answer) => {
+  const handleAnswer = async (option) => {
     try {
       setLoading(true)
-      const newAnswers = [...answers, { question: currentQuestion, answer }]
+      const newAnswers = [...answers, { question: currentQuestion, answer: option.text }]
       setAnswers(newAnswers)
-
-      const selectedOptionId = answer === 'Ya' 
-        ? `${currentQuestionId}_yes` 
-        : `${currentQuestionId}_no`
 
       const response = await expertSystemService.diagnose({
         sessionId,
         questionId: currentQuestionId,
-        selectedOptionId,
+        selectedOptionId: option.id,
       })
 
       if (response.isComplete && response.recommendation) {
         setRecommendation(response.recommendation)
         setCurrentQuestion(null)
         setCurrentQuestionId(null)
+        setCurrentOptions([])
       } else if (response.nextQuestion) {
         setCurrentQuestion(response.nextQuestion.text)
         setCurrentQuestionId(response.nextQuestion.id)
+        setCurrentOptions(response.nextQuestion.options || [])
         setQuestionHistory([...questionHistory, {
           questionId: response.nextQuestion.id,
-          question: response.nextQuestion.text
+          question: response.nextQuestion.text,
+          options: response.nextQuestion.options || []
         }])
       }
     } catch (error) {
@@ -88,13 +90,28 @@ function ExpertSystemPage() {
       const previousQuestion = newHistory[newHistory.length - 1]
       setCurrentQuestion(previousQuestion.question)
       setCurrentQuestionId(previousQuestion.questionId)
+      setCurrentOptions(previousQuestion.options || [])
     }
   }
+
+  // Hitung total pertanyaan berdasarkan gender yang dipilih
+  const getTotalQuestions = () => {
+
+    const genderAnswer = answers.find(a => a.question?.includes('jenis kelamin'))
+    if (genderAnswer) {
+      return genderAnswer.answer === 'Wanita' ? 9 : 8
+    }
+    return 9 // Default max
+  }
+
+  const totalQuestions = getTotalQuestions()
+  const currentProgress = Math.min(answers.length + 1, totalQuestions)
 
   const resetConsultation = () => {
     setSessionId(null)
     setCurrentQuestion(null)
     setCurrentQuestionId(null)
+    setCurrentOptions([])
     setRecommendation(null)
     setAnswers([])
     setQuestionHistory([])
@@ -198,33 +215,56 @@ function ExpertSystemPage() {
                   </p>
                 ) : (
                   <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2">
-                    {answers.map((item, index) => (
-                      <div 
-                        key={index} 
-                        className="p-4 bg-gradient-to-r from-primary-50 to-secondary-50 rounded-lg border border-primary-100"
-                      >
-                        <div className="flex items-start gap-2 mb-2">
-                          <span className="bg-primary-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                            {index + 1}
-                          </span>
-                          <p className="text-sm text-gray-700 font-medium flex-1">
-                            {item.question}
-                          </p>
+                    {answers.map((item, index) => {
+                      const isYes = item.answer === 'Ya'
+                      const isNo = item.answer === 'Tidak'
+                      const isMale = item.answer === 'Pria'
+                      const isFemale = item.answer === 'Wanita'
+                      
+                      let iconColor = 'text-primary-600'
+                      let textColor = 'text-primary-700'
+                      let Icon = null
+                      
+                      if (isYes) {
+                        Icon = FaCheck
+                        iconColor = 'text-green-600'
+                        textColor = 'text-green-700'
+                      } else if (isNo) {
+                        Icon = FaTimes
+                        iconColor = 'text-red-600'
+                        textColor = 'text-red-700'
+                      } else if (isMale) {
+                        Icon = FaMars
+                        iconColor = 'text-blue-600'
+                        textColor = 'text-blue-700'
+                      } else if (isFemale) {
+                        Icon = FaVenus
+                        iconColor = 'text-pink-600'
+                        textColor = 'text-pink-700'
+                      }
+                      
+                      return (
+                        <div 
+                          key={index} 
+                          className="p-4 bg-gradient-to-r from-primary-50 to-secondary-50 rounded-lg border border-primary-100"
+                        >
+                          <div className="flex items-start gap-2 mb-2">
+                            <span className="bg-primary-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                              {index + 1}
+                            </span>
+                            <p className="text-sm text-gray-700 font-medium flex-1">
+                              {item.question}
+                            </p>
+                          </div>
+                          <div className="ml-8 flex items-center gap-2">
+                            {Icon && <Icon className={`${iconColor} text-sm`} />}
+                            <span className={`font-semibold text-sm ${textColor}`}>
+                              {item.answer}
+                            </span>
+                          </div>
                         </div>
-                        <div className="ml-8 flex items-center gap-2">
-                          {item.answer === 'Ya' ? (
-                            <FaCheck className="text-green-600 text-sm" />
-                          ) : (
-                            <FaTimes className="text-red-600 text-sm" />
-                          )}
-                          <span className={`font-semibold text-sm ${
-                            item.answer === 'Ya' ? 'text-green-700' : 'text-red-700'
-                          }`}>
-                            {item.answer}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </div>
@@ -237,16 +277,16 @@ function ExpertSystemPage() {
                 <div className="bg-gradient-to-r from-primary-600 to-primary-700 p-6 text-white">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-medium">
-                      Pertanyaan {answers.length + 1} dari 11
+                      Pertanyaan {currentProgress} dari {totalQuestions}
                     </span>
                     <span className="text-sm font-bold bg-white/20 px-3 py-1 rounded-full">
-                      {Math.round(((answers.length + 1) / 11) * 100)}%
+                      {Math.round((currentProgress / totalQuestions) * 100)}%
                     </span>
                   </div>
                   <div className="w-full bg-white/30 rounded-full h-2">
                     <div
                       className="bg-white h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${((answers.length + 1) / 11) * 100}%` }}
+                      style={{ width: `${(currentProgress / totalQuestions) * 100}%` }}
                     />
                   </div>
                 </div>
@@ -257,39 +297,73 @@ function ExpertSystemPage() {
                     {currentQuestion}
                   </h2>
 
-                  {/* Answer Buttons - Fixed Position */}
+                  {/* Answer Buttons - Dynamic from backend options */}
                   <div className="space-y-4">
-                    <button
-                      onClick={() => handleAnswer('Ya')}
-                      disabled={loading}
-                      className="w-full group relative overflow-hidden p-6 border-2 border-green-200 rounded-xl hover:border-green-500 hover:bg-green-50 transition-all text-left font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-green-100 group-hover:bg-green-500 rounded-full flex items-center justify-center transition-colors">
-                            <FaCheck className="text-green-600 group-hover:text-white text-xl transition-colors" />
-                          </div>
-                          <span className="text-gray-700 group-hover:text-green-700">Ya</span>
-                        </div>
-                        <span className="text-gray-400 group-hover:text-green-500">→</span>
-                      </div>
-                    </button>
+                    {currentOptions.map((option, index) => {
+                      const isYes = option.text === 'Ya' || option.id.includes('_yes')
+                      const isNo = option.text === 'Tidak' || option.id.includes('_no')
+                      const isMale = option.text === 'Pria' || option.id.includes('_male')
+                      const isFemale = option.text === 'Wanita' || option.id.includes('_female')
+                      
+                      let colorClass = 'border-primary-200 hover:border-primary-500 hover:bg-primary-50'
+                      let iconBgClass = 'bg-primary-100 group-hover:bg-primary-500'
+                      let iconTextClass = 'text-primary-600 group-hover:text-white'
+                      let textHoverClass = 'group-hover:text-primary-700'
+                      let arrowClass = 'group-hover:text-primary-500'
+                      
+                      if (isYes) {
+                        colorClass = 'border-green-200 hover:border-green-500 hover:bg-green-50'
+                        iconBgClass = 'bg-green-100 group-hover:bg-green-500'
+                        iconTextClass = 'text-green-600 group-hover:text-white'
+                        textHoverClass = 'group-hover:text-green-700'
+                        arrowClass = 'group-hover:text-green-500'
+                      } else if (isNo) {
+                        colorClass = 'border-red-200 hover:border-red-500 hover:bg-red-50'
+                        iconBgClass = 'bg-red-100 group-hover:bg-red-500'
+                        iconTextClass = 'text-red-600 group-hover:text-white'
+                        textHoverClass = 'group-hover:text-red-700'
+                        arrowClass = 'group-hover:text-red-500'
+                      } else if (isMale) {
+                        colorClass = 'border-blue-200 hover:border-blue-500 hover:bg-blue-50'
+                        iconBgClass = 'bg-blue-100 group-hover:bg-blue-500'
+                        iconTextClass = 'text-blue-600 group-hover:text-white'
+                        textHoverClass = 'group-hover:text-blue-700'
+                        arrowClass = 'group-hover:text-blue-500'
+                      } else if (isFemale) {
+                        colorClass = 'border-pink-200 hover:border-pink-500 hover:bg-pink-50'
+                        iconBgClass = 'bg-pink-100 group-hover:bg-pink-500'
+                        iconTextClass = 'text-pink-600 group-hover:text-white'
+                        textHoverClass = 'group-hover:text-pink-700'
+                        arrowClass = 'group-hover:text-pink-500'
+                      }
 
-                    <button
-                      onClick={() => handleAnswer('Tidak')}
-                      disabled={loading}
-                      className="w-full group relative overflow-hidden p-6 border-2 border-red-200 rounded-xl hover:border-red-500 hover:bg-red-50 transition-all text-left font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-red-100 group-hover:bg-red-500 rounded-full flex items-center justify-center transition-colors">
-                            <FaTimes className="text-red-600 group-hover:text-white text-xl transition-colors" />
+                      return (
+                        <button
+                          key={option.id}
+                          onClick={() => handleAnswer(option)}
+                          disabled={loading}
+                          className={`w-full group relative overflow-hidden p-6 border-2 ${colorClass} rounded-xl transition-all text-left font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                              <div className={`w-12 h-12 ${iconBgClass} rounded-full flex items-center justify-center transition-colors`}>
+                                {isYes && <FaCheck className={`${iconTextClass} text-xl transition-colors`} />}
+                                {isNo && <FaTimes className={`${iconTextClass} text-xl transition-colors`} />}
+                                {isMale && <FaMars className={`${iconTextClass} text-2xl transition-colors`} />}
+                                {isFemale && <FaVenus className={`${iconTextClass} text-2xl transition-colors`} />}
+                                {!isYes && !isNo && !isMale && !isFemale && (
+                                  <span className={`${iconTextClass} text-xl font-bold transition-colors`}>
+                                    {index + 1}
+                                  </span>
+                                )}
+                              </div>
+                              <span className={`text-gray-700 ${textHoverClass}`}>{option.text}</span>
+                            </div>
+                            <span className={`text-gray-400 ${arrowClass}`}>→</span>
                           </div>
-                          <span className="text-gray-700 group-hover:text-red-700">Tidak</span>
-                        </div>
-                        <span className="text-gray-400 group-hover:text-red-500">→</span>
-                      </div>
-                    </button>
+                        </button>
+                      )
+                    })}
                   </div>
 
                   {/* Back Button */}

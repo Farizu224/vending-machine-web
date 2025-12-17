@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FaShoppingCart, FaMinus, FaPlus, FaArrowLeft, FaBolt } from 'react-icons/fa'
-import { productService } from '../api/services'
+import { productService, transactionService } from '../api/services'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import useCartStore from '../store/useCartStore'
+import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
 
 function ProductDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { isAuthenticated } = useAuth()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [buyingNow, setBuyingNow] = useState(false)
   const [quantity, setQuantity] = useState(1)
   const addItem = useCartStore(state => state.addItem)
 
@@ -44,9 +47,52 @@ function ProductDetailPage() {
     toast.success(`${quantity} ${product.nama} ditambahkan ke keranjang`)
   }
 
-  const handleBuyNow = () => {
-    addItem(product, quantity)
-    navigate('/checkout')
+  const handleBuyNow = async () => {
+    // Check if user is logged in
+    if (!isAuthenticated()) {
+      toast.error('Silakan login terlebih dahulu untuk melakukan pembelian')
+      navigate('/login', { state: { from: { pathname: `/products/${id}` } } })
+      return
+    }
+
+    try {
+      setBuyingNow(true)
+      
+      // Create transaction directly
+      const transactionData = {
+        productId: parseInt(id),
+        quantity: quantity,
+        platform: 'web'
+      }
+
+      const response = await transactionService.createTransaction(transactionData)
+      
+      // Redirect to Midtrans payment page
+      if (response.snapUrl) {
+        window.location.href = response.snapUrl
+      } else if (response.snapToken) {
+        // Alternative: use snap.pay if using Midtrans Snap.js
+        window.snap.pay(response.snapToken, {
+          onSuccess: function(result) {
+            navigate(`/transaction/${response.orderId}`)
+          },
+          onPending: function(result) {
+            navigate(`/transaction/${response.orderId}`)
+          },
+          onError: function(result) {
+            toast.error('Pembayaran gagal')
+          },
+          onClose: function() {
+            toast.info('Pembayaran dibatalkan')
+          }
+        })
+      }
+    } catch (error) {
+      console.error('Buy now error:', error)
+      toast.error(error.message || 'Gagal membuat transaksi')
+    } finally {
+      setBuyingNow(false)
+    }
   }
 
   const decreaseQuantity = () => {
@@ -178,15 +224,24 @@ function ProductDetailPage() {
                 
                 <button
                   onClick={handleBuyNow}
-                  disabled={product.stok === 0}
+                  disabled={product.stok === 0 || buyingNow}
                   className={`flex-1 flex items-center justify-center gap-2 py-3 px-6 rounded-lg font-semibold text-lg transition-all ${
-                    product.stok === 0
+                    product.stok === 0 || buyingNow
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'bg-gradient-to-r from-secondary-500 to-secondary-600 hover:from-secondary-600 hover:to-secondary-700 text-white shadow-md hover:shadow-lg'
                   }`}
                 >
-                  <FaBolt />
-                  <span>Beli Sekarang</span>
+                  {buyingNow ? (
+                    <>
+                      <LoadingSpinner size="small" />
+                      <span>Memproses...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaBolt />
+                      <span>Beli Sekarang</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>

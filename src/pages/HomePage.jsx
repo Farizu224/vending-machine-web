@@ -1,57 +1,36 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { FaSearch, FaLightbulb, FaShoppingBag } from 'react-icons/fa'
 import { Gi3DGlasses, GiHealthNormal } from 'react-icons/gi'
 import ProductCard from '../components/product/ProductCard'
-
-// Data produk dummy
-const DUMMY_PRODUCTS = [
-  {
-    id: 1,
-    nama: 'Jamu Kunyit Asam',
-    harga: 15000,
-    gambar: 'https://images.unsplash.com/photo-1505944357768-b0a8e6d1e9d8?w=400',
-    deskripsi: 'Menyegarkan dan baik untuk kesehatan wanita.',
-  },
-  {
-    id: 2,
-    nama: 'Jamu Beras Kencur',
-    harga: 12000,
-    gambar: 'https://images.unsplash.com/photo-1464983953574-0892a716854b?w=400',
-    deskripsi: 'Meningkatkan stamina dan nafsu makan.',
-  },
-  {
-    id: 3,
-    nama: 'Jamu Temulawak',
-    harga: 17000,
-    gambar: 'https://images.unsplash.com/photo-1519864600265-abb23847ef2c?w=400',
-    deskripsi: 'Baik untuk pencernaan dan hati.',
-  },
-  {
-    id: 4,
-    nama: 'Jamu Cabe Puyang',
-    harga: 13000,
-    gambar: 'https://images.unsplash.com/photo-1502741338009-cac2772e18bc?w=400',
-    deskripsi: 'Meredakan pegal dan nyeri otot.',
-  },
-  {
-    id: 5,
-    nama: 'Jamu Sinom',
-    harga: 14000,
-    gambar: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?w=400',
-    deskripsi: 'Menyegarkan dan kaya antioksidan.',
-  },
-  {
-    id: 6,
-    nama: 'Jamu Pahitan',
-    harga: 16000,
-    gambar: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400',
-    deskripsi: 'Baik untuk detoks dan kesehatan kulit.',
-  },
-]
+import IoTStatus from '../components/IoTStatus'
+import { productService } from '../api/services'
 
 function HomePage() {
-  const [featuredProducts] = useState(DUMMY_PRODUCTS)
+  const [featuredProducts, setFeaturedProducts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await productService.getAllProducts()
+        const products = Array.isArray(response)
+          ? response
+          : (response?.items || response?.data || response || [])
+        setFeaturedProducts(products)
+      } catch (err) {
+        setError(err.message)
+        console.error('Error fetching products:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProducts()
+  }, [])
 
   const features = [
     {
@@ -77,9 +56,9 @@ function HomePage() {
   ]
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-full">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary-50 via-secondary-50 to-primary-100 py-20">
+      <section className="bg-gradient-to-br from-primary-50 via-secondary-50 to-primary-100 min-h-screen flex items-center py-20">
         <div className="container-custom">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -121,7 +100,7 @@ function HomePage() {
       <section className="py-16 bg-white">
         <div className="container-custom">
           <h2 className="text-4xl font-display font-bold text-center mb-12">
-            Mengapa Memilih <span className="text-gradient">Jamuin</span>?
+            Kenapa Harus Jamuin
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -138,25 +117,57 @@ function HomePage() {
         </div>
       </section>
 
+      {/* IoT Status Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container-custom">
+          <h2 className="text-4xl font-display font-bold text-center mb-8">
+            Status Mesin Real-time
+          </h2>
+          <p className="text-center text-gray-600 mb-8">
+            Data langsung dari vending machine IoT melalui koneksi ngrok
+          </p>
+          <div className="max-w-2xl mx-auto">
+            <IoTStatus />
+          </div>
+        </div>
+      </section>
+
       {/* Featured Products Section */}
       <section className="py-16 bg-gray-50">
         <div className="container-custom">
           <div className="flex justify-between items-center mb-12">
             <h2 className="text-4xl font-display font-bold">
-              Produk <span className="text-gradient">Unggulan</span>
+              Produk Unggulan
             </h2>
             <Link to="/products" className="btn-outline">
               Lihat Semua
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredProducts.map(product => (
-              <ProductCard
-                key={product.id}
-                product={product}
-              />
-            ))}
-          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8 text-red-800">
+              <p className="font-semibold">Terjadi kesalahan saat memuat produk:</p>
+              <p>{error}</p>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="flex justify-center items-center py-12">
+              <div className="text-center">
+                <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mb-4"></div>
+                <p className="text-gray-600">Memuat produk...</p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredProducts.map(product => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -164,7 +175,7 @@ function HomePage() {
       <section className="py-16 bg-white">
         <div className="container-custom">
           <h2 className="text-4xl font-display font-bold text-center mb-12">
-            Cara <span className="text-gradient">Berbelanja</span>
+            Cara Berbelanja
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
